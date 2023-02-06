@@ -1,2 +1,65 @@
+# DevOps - Containerization, CI/CD &amp; Monitoring - January 2023 
+
 # vagrant
-DevOps - Containerization, CI/CD &amp; Monitoring - January 2023 
+
+1. Create vagrant box
+    - Install ubuntu-22.04.1-live-server-amd64.iso onto VirtualBox
+    - Configurе Adapter 1 NAT network port forwarding for SSH access - host: 2022, guest: 22
+    - Run the machine
+    - Add/Load VBoxGusetAdditions.iso from Devices -> Optical Drives
+    - Opened terminal from the host machine and open SSH - 'sudo ssh -p 2022 vagrant@localhost'
+    - Download package information from all configured sources - 'sudo apt-get -y update'
+    - Install available upgrades of all packages currently installed on the system - 'sudo apt-get -y upgrade'
+    - Check if kernel version are already installed - 'ls -l /usr/src/linux-headers-$(uname -r)'
+    - Mount the VirtualBox guest additions - 'sudo mount /dev/sr0 /mnt'
+    - Install VirtualBox guest additions - 'sudo /mnt/VBoxLinuxAdditions.run'
+    - Add the vagrant user to the vboxsf group - 'sudo usermod -aG vboxsf vagrant'
+    - For Ubuntu Server the grub waiting time is set to 0 by default
+    - Add the vagrant user to the sudoers list and allow it to sudo without entering password (vagrant ALL=(ALL) NOPASSWD:ALL) - 'echo "vagrant ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/vagrant'
+    - Close the session and open again
+    - Create the target folder for the vagrant insecure key - 'mkdir -m 0700 -p /home/vagrant/.ssh'
+    - Download the key - ''wget --no-check-certificate \ https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub \ -O /home/vagran  /.ssh/authorized_keys'
+    - Set the permissions of the key to read, write and not execute - 'chmod 0600 /home/vagrant/.ssh/authorized_keys'
+    - Clean up the apt cache - 'sudo apt-get clean all'
+    - Create empty file with max machine size - 'sudo dd if=/dev/zero of=/EMPTY bs=1M status=progress'
+    - Remove the created empty file - 'sudo rm -f /EMPTY'
+    - Reboot - 'sudo reboot'
+    - Eject the additions media that still attached to the machine from storage settings within the VirtualBox manager and leave it empty
+    - Create a folder on the host machine to host the box
+    - Build the box - 'vagrant package --base ubuntu-server'
+    - Add the box to the local catalog - 'vagrant box add ubuntu package.box'
+    - Create a configuration based on the local box - 'vagrant init ubuntu'
+    - Power on the machine - 'vagrant up'
+    - Connect to it - 'vagrant ssh'
+    - Explore the content of the machine and close the SSH session - 'exit'
+    - Delete the machine - 'vagrant destroy --force' 
+    - Publishing the created box to Vagrant Cloud : 'https://app.vagrantup.com/mark79'
+2. Create vagrant file
+    - Create on host a work folder
+    - Create 'web' machine with box from my vagrant cloud "mark79/ubuntu"
+        - Set IP address: 192.168.34.99
+        - Set forwarded port for html: "guest:80", host:"8080"
+        - Set provision from bash script file "web.sh"
+        - Inside the bash script:
+            - add ip with host name to hosts file 
+            - list and update all installed packages
+            - install needed software (apache2, php, libapache2-mod-php, php-mysql and git)  
+            - enable & start the apache2 web server
+            - firewall enable & open port for html (HTTP 80/tcp, HTTPS 443/tcp)
+            - clone the data from git repository (https://github.com/shekeriev/bgapp.git)
+            - copy files from repository 'web' folder to '/var/www/html'
+            - remove the folder with the cloned project
+            - rename default web server index file to load index.php
+    - Create 'db' machine with box from my vagrant cloud "mark79/ubuntu"
+        - Set IP address: 192.168.34.99
+        - Set provision from bash script file "db.sh"
+        - Inside the bash script:
+            - add ip with host name to hosts file 
+            - list and update all installed packages
+            - install needed software (mariadb, mariadb-server and git)
+            - enable & start the database server
+            - configure remote access to database server & restart
+            - firewall enable & open port for mariadb (HTTP 3306/tcp)
+            - clone the data from git repository (https://github.com/shekeriev/bgapp.git)
+            - executing a sql script to create the database
+            - remove the folder with the cloned project
